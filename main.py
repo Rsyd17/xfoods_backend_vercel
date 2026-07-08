@@ -44,3 +44,5 @@ def get_statistik():
         "harga_termurah": int(df['harga_menu'].min()),
         "harga_termahal": int(df['harga_menu'].max())
     }
+def beranda():
+    return{"pesan":"Mesin Rekomendasi Aktif dan Siap Menerima Data"}
