@@ -6,7 +6,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 # Konfigurasi Path Data
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PATH_DATA = os.path.join(BASE_DIR, 'data', 'Menu_Kategori_Alamat_Baru.csv')
+PATH_DATA = os.path.join(BASE_DIR, 'data', 'Menu_Kategori_Alamat_Baru_1.csv')
 
 def siapkan_model():
     # 1. Load dataset menggunakan variabel path yang sudah dikonfigurasi
