@@ -8,7 +8,7 @@ app = FastAPI()
 # Mengizinkan React (Frontend) untuk mengambil data dari FastAPI (Backend)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://xfoods-frontend-vercel.vercel.app"], 
+    allow_origins=["https://xfoods.vercel.app"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
