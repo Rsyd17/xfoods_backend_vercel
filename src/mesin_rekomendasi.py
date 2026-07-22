@@ -6,7 +6,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 # Konfigurasi Path Data
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PATH_DATA = os.path.join(BASE_DIR, 'data', 'X_FOODS_MENU.csv')
+PATH_DATA = os.path.join(BASE_DIR, 'data', 'X_FOODS_MENU_UPDATED.csv')
 
 def siapkan_model():
     # 1. Load dataset menggunakan variabel path yang sudah dikonfigurasi
@@ -51,11 +51,34 @@ def cari_kombinasi_paket(pref_main, pref_bev, pref_side, budget_maksimal, df, tf
     df_b['skor_kemiripan'] = skor_bev
     df_s['skor_kemiripan'] = skor_side
     
-    # 3. Ambil 30 kandidat teratas (Diperbesar dari 15 agar menu langka punya ruang untuk dirakit)
-    kandidat_main = df_m[df_m['kategori_course'] == 'Main Course'].sort_values('skor_kemiripan', ascending=False).head(30)
-    kandidat_bev = df_b[df_b['kategori_course'] == 'Beverage'].sort_values('skor_kemiripan', ascending=False).head(30)
-    # Ditambahkan 'Side Dish' ke dalam array isin untuk berjaga-jaga jika ada penyesuaian nama di dataset
-    kandidat_side = df_s[df_s['kategori_course'].isin(['Appetizer', 'Dessert', 'Side Dish'])].sort_values('skor_kemiripan', ascending=False).head(30)
+  
+    kata_abaikan = ['dan', 'atau', 'dengan', 'yang', 'untuk', 'dari', 'rasa']
+    
+    # Boosting untuk Main Course
+    kata_kunci_main = [kata.strip() for kata in pref_main.lower().split()]
+    for kata in kata_kunci_main:
+        if len(kata) > 2 and kata not in kata_abaikan:
+            mask_m = df_m['nama_menu'].str.lower().str.contains(kata, na=False) | \
+                     df_m['profil_rasa'].str.contains(kata, na=False)
+            df_m.loc[mask_m, 'skor_kemiripan'] += 0.3
+# ==============================================================
+    # 3. Ambil Kandidat Teratas (dengan Controlled Randomness)
+    # Alih-alih mengambil 30 teratas yang selalu statis, kita memperbesar 
+    # kolam menjadi 60 teratas, lalu mengambil sampel acak (misal 20 menu) 
+    # untuk diproses. Ini memaksa Main Course untuk selalu ter-shuffle tiap klik!
+    # ==============================================================
+    
+    # Ambil 60 terbaik, lalu acak posisinya, dan pilih 20
+    top_main = df_m[df_m['kategori_course'] == 'Main Course'].sort_values('skor_kemiripan', ascending=False).head(60)
+    kandidat_main = top_main.sample(n=min(20, len(top_main)))
+    
+    # Lakukan hal yang sama untuk Beverage
+    top_bev = df_b[df_b['kategori_course'] == 'Beverage'].sort_values('skor_kemiripan', ascending=False).head(40)
+    kandidat_bev = top_bev.sample(n=min(20, len(top_bev)))
+    
+    # Lakukan hal yang sama untuk Side Dish
+    top_side = df_s[df_s['kategori_course'].isin(['Appetizer', 'Dessert', 'Side Dish'])].sort_values('skor_kemiripan', ascending=False).head(40)
+    kandidat_side = top_side.sample(n=min(20, len(top_side)))
     
     semua_kombinasi = []
     
