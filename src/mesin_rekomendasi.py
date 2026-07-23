@@ -38,7 +38,7 @@ def cari_kombinasi_paket(pref_main, pref_bev, pref_side, budget_maksimal, df, tf
     vec_bev = tfidf.transform([pref_bev])
     vec_side = tfidf.transform([pref_side])
     
-    # 2. Hitung Cosine Similarity secara terpisah
+# 2. Hitung Cosine Similarity secara terpisah
     skor_main = cosine_similarity(vec_main, tfidf_matrix)[0]
     skor_bev = cosine_similarity(vec_bev, tfidf_matrix)[0]
     skor_side = cosine_similarity(vec_side, tfidf_matrix)[0]
@@ -47,20 +47,28 @@ def cari_kombinasi_paket(pref_main, pref_bev, pref_side, budget_maksimal, df, tf
     df_b = df.copy()
     df_s = df.copy()
     
+    # LANGKAH 1: Buat kolomnya dulu dan masukkan nilai aslinya
     df_m['skor_kemiripan'] = skor_main
     df_b['skor_kemiripan'] = skor_bev
     df_s['skor_kemiripan'] = skor_side
     
-  
     kata_abaikan = ['dan', 'atau', 'dengan', 'yang', 'untuk', 'dari', 'rasa']
     
-    # Boosting untuk Main Course
+    # LANGKAH 2: Lakukan Keyword Boosting (Suntik Bonus +0.3)
     kata_kunci_main = [kata.strip() for kata in pref_main.lower().split()]
     for kata in kata_kunci_main:
         if len(kata) > 2 and kata not in kata_abaikan:
             mask_m = df_m['nama_menu'].str.lower().str.contains(kata, na=False) | \
                      df_m['profil_rasa'].str.contains(kata, na=False)
             df_m.loc[mask_m, 'skor_kemiripan'] += 0.3
+            
+    # LANGKAH 3: Pangkas (Clip) skornya di akhir agar maksimal mentok di 1.0
+    df_m['skor_kemiripan'] = df_m['skor_kemiripan'].clip(upper=1.0)
+    df_b['skor_kemiripan'] = df_b['skor_kemiripan'].clip(upper=1.0)
+    df_s['skor_kemiripan'] = df_s['skor_kemiripan'].clip(upper=1.0)
+
+# ==============================================================
+    # 3. Ambil Kandidat Teratas (dengan Controlled Randomness)
 # ==============================================================
     # 3. Ambil Kandidat Teratas (dengan Controlled Randomness)
     # Alih-alih mengambil 30 teratas yang selalu statis, kita memperbesar 
